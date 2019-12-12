@@ -1,7 +1,5 @@
 'use strict'
 
-const DEFAULT_IO = 'primary'
-
 let idGen = (function* () {
     let id = 0
     while (true)
@@ -15,7 +13,6 @@ class GraphNode {
     }
 
     connect(destination) {
-        // update this sends
         let {sends} = this.connections
         sends[destination.id] = sends[destination.id] || {}
         sends[destination.id][destination.connectionType] = destination
@@ -49,8 +46,10 @@ class AudioGraphParam {
         this.receives = receives
         this.connector = this.param
         for (let prop in this.param) {
-            // this[prop] = () => { this.param[prop] }
-            this[prop] = this.param[prop]
+            Object.defineProperty(this, prop, {
+                get: () => this.param[prop],
+                set: (value) => this.param[prop] = value
+            })
         }
     }
 
@@ -73,20 +72,16 @@ class AudioGraphNode extends GraphNode {
         // if node is pre-existing WAAPI node
         else this.node = audioNode
         this.connector = this.node
-        // TODO AudioGraphParam that handles connections like WAAPI:
-        // osc.connect(gain.gain) by making its own "receives"
         for (let prop in this.node) {
             if (!(prop in this)) {
-                //console.log(prop, this.node[prop])
-                // console.log(prop, this.node[prop].constructor.name)
                 // if AudioParam, wrap it up
                 if (this.node[prop] && this.node[prop].constructor.name === 'AudioParam') {
-                    this.connections.receives[prop] = {}
+                    // this.connections.receives[prop] = {}
                     this[prop] = new AudioGraphParam(
                         this.id,
                         prop,
                         this.node[prop],
-                        this.connections.receives[prop],
+                        this.connections.receives[prop] = {},
                     )
                 }
                 else
@@ -123,14 +118,12 @@ class AudioGraph {
     }
 
     createNode(nodeType, context) {
-        let n = new nodeType(context)
-        return this.addAudioNode(n)
+        return this.addAudioNode(new nodeType(context))
     }
 
     addAudioNode = (node) => {
         let id = idGen.next().value
-        let n = new AudioGraphNode(id, node)
-        return this.nodes[id] = n
+        return this.nodes[id] = new AudioGraph(id, node)
     }
 }
 
@@ -150,8 +143,8 @@ let gain = graph.createGainNode(context)
 osc.connect(gain)
 gain.gain.value = 0.2
 console.log(osc.frequency.value, osc.node.frequency)
-osc.node.frequency.value = 200
-lfo.node.frequency.value = 4
+osc.frequency.value = 200
+lfo.frequency.value = 4
 // lfo.frequency.value = 4
 console.log(gain.gain)
 lfo.connect(gain.gain)
