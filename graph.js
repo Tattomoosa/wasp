@@ -1,10 +1,28 @@
+
+/*
+ * Wasp Graph
+ *
+ * This module is wrapped directly around the Web Audio API and presents an
+ * identical API, while tracking all created nodes/connections.
+ *
+ * It is the lowest level WASP module, and can be used on its own without
+ * any other WASP features.
+ */
+
+// TODO Instead of current architecture, could modify
+// AudioNodePrototype directly... is that a bad idea?
+
 'use strict'
 
+// todo fat arrow generator?
 let idGen = (function* () {
     let id = 0
-    while (true)
-        yield id++
+    while (true) yield id++
 })()
+
+function isAudioParam(param) {
+    return param.constructor.name === 'AudioParam'
+}
 
 class GraphNode {
     constructor(id) {
@@ -75,7 +93,7 @@ class AudioGraphNode extends GraphNode {
         for (let prop in this.node) {
             if (!(prop in this)) {
                 // if AudioParam, wrap it up
-                if (this.node[prop] && this.node[prop].constructor.name === 'AudioParam') {
+                if (this.node[prop] && isAudioParam(this.node[prop])) {
                     // this.connections.receives[prop] = {}
                     this[prop] = new AudioGraphParam(
                         this.id,
@@ -112,34 +130,36 @@ const audioNodes = [
     ConvolverNode,
 ]
 
-class AudioGraph {
-    constructor() {
+class Graph {
+    constructor(context) {
         this.nodes = {}
+        // shortcut methods
+        audioNodes.forEach(
+            node => this['create' + node.name.replace('Node','')] = () => {
+                return this.createNode(node, context)
+            })
     }
 
     createNode(nodeType, context) {
         return this.addAudioNode(new nodeType(context))
     }
 
-    addAudioNode = (node) => {
+    addAudioNode(node) {
         let id = idGen.next().value
-        return this.nodes[id] = new AudioGraph(id, node)
+        return this.nodes[id] = new AudioGraphNode(id, node)
     }
 }
 
-let graph = new AudioGraph()
 
-audioNodes.forEach(node => graph['create' + node.name] = (context) => {
-    return graph.createNode(node, context)
-})
-
+// prototype, demonstration
+/*
 const context = new (window.AudioContext || window.webkitAudioContext)()
-
+let graph = new Graph(context)
 // wrap
 let dest = graph.addAudioNode(context.destination)
-let osc = graph.createOscillatorNode(context)
-let lfo = graph.createOscillatorNode(context)
-let gain = graph.createGainNode(context)
+let osc = graph.createOscillator()
+let lfo = graph.createOscillator()
+let gain = graph.createGain()
 osc.connect(gain)
 gain.gain.value = 0.2
 console.log(osc.frequency.value, osc.node.frequency)
@@ -152,3 +172,4 @@ gain.connect(dest)
 lfo.node.start()
 osc.node.start()
 console.log(osc, lfo)
+*/
