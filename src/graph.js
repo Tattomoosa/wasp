@@ -16,7 +16,7 @@
 // todo fat arrow generator?
 let idGen = (function* () {
     let id = 0
-    while (true) yield id++
+    for (;;) yield id++
 })()
 
 function isAudioParam(param) {
@@ -129,7 +129,7 @@ const audioNodes = [
     ConvolverNode,
 ]
 
-class Graph {
+export default class Graph {
     constructor(context) {
         this.nodes = {}
         // shortcut methods
@@ -148,27 +148,3 @@ class Graph {
         return this.nodes[id] = new AudioGraphNode(id, node)
     }
 }
-
-
-// prototype, demonstration
-/*
-const context = new (window.AudioContext || window.webkitAudioContext)()
-let graph = new Graph(context)
-// wrap
-let dest = graph.addAudioNode(context.destination)
-let osc = graph.createOscillator()
-let lfo = graph.createOscillator()
-let gain = graph.createGain()
-osc.connect(gain)
-gain.gain.value = 0.2
-console.log(osc.frequency.value, osc.node.frequency)
-osc.frequency.value = 200
-lfo.frequency.value = 4
-// lfo.frequency.value = 4
-console.log(gain.gain)
-lfo.connect(gain.gain)
-gain.connect(dest)
-lfo.node.start()
-osc.node.start()
-console.log(osc, lfo)
-*/
