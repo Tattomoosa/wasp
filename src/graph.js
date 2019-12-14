@@ -8,7 +8,7 @@
  * any other WASP features.
  */
 
-'use strict'
+const DEFAULT_CONTEXT = new window.AudioContext || window.webkitAudioContext
 
 // todo fat arrow generator?
 let idGen = (function* () {
@@ -17,7 +17,7 @@ let idGen = (function* () {
 })()
 
 function isAudioParam(param) {
-  return param.constructor.name === 'AudioParam'
+  return param != null && param.constructor.name === 'AudioParam'
 }
 
 class GraphNode {
@@ -91,7 +91,7 @@ class AudioGraphNode extends GraphNode {
     for (let prop in this.node) {
       if (!(prop in this)) {
         // if AudioParam, wrap it up
-        if (this.node[prop] && isAudioParam(this.node[prop])) {
+        if (isAudioParam(this.node[prop])) {
           // this.connections.receives[prop] = {}
           this[prop] = new AudioGraphParam(
             this.id,
@@ -128,11 +128,15 @@ const audioNodes = Object.getOwnPropertyNames(
   .filter(x => x !== undefined)
   .filter(x => x !== ScriptProcessorNode)
 
-const DEFAULT_CONTEXT = new window.AudioContext || window.webkitAudioContext
 
 class Graph {
   constructor(context = DEFAULT_CONTEXT) {
     this.nodes = {}
+    {
+      let id = 0 // private
+      // always returns a unique id (to this graph, ever-increasing)
+      this.createNodeID = () => id++
+    }
     // shortcut methods
     audioNodes.forEach(node => {
       let createFn = `create${node.name.replace('Node', '')}`
@@ -151,28 +155,26 @@ class Graph {
     return new Graph[nodeType.name](this, config)
   }
 
-  addAudioNode(node) {
-    console.log('add audio node')
-    let id = idGen.next().value
-    return this.nodes[id] = new Graph[node.constructor.name](this, node)
-  }
-
   __addGraphNode(node) {
+    if (this.nodes[node.id] !== undefined)
+      throw(new Error('Graph already contains node id'))
     return this.nodes[node.id] = node
   }
 }
 audioNodes.forEach(
-  node => Graph[node.name] = class extends AudioGraphNode {
+  waapiNode => Graph[waapiNode.name] = class extends AudioGraphNode {
     constructor(graph, config) {
-      if (graph === undefined)
-        console.error('constructor', graph)
-      super(idGen.next().value, new node(graph.__context, config), graph)
+      if (!graph instanceof Graph)
+        throw(new TypeError('graph must be an instance of Graph'))
+      super(graph.createNodeID(), new waapiNode(graph.__context, config), graph)
     }
   })
 
 Graph.AudioDestinationNode = class extends AudioGraphNode {
   constructor(graph, node) {
-    super(idGen.next().value, node, graph)
+    if (!graph instanceof Graph)
+      throw(new TypeError('graph must be an instance of Graph'))
+    super(graph.createNodeID(), node, graph)
   }
 }
 
