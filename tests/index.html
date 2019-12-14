@@ -48,10 +48,7 @@ ul ul ul .collapse-button {
 }
   </style>
   <script class="mocha-exec">
-    mocha.run()
-    // kind of shit collapsible thing
-    // TODO worth expanding? idk
-    setTimeout(() => {
+    after(() => {
       document.querySelectorAll('.suite')
       // .filter(e => !e.matches('.suite .suite'))
       .forEach((e) => {
@@ -67,7 +64,10 @@ ul ul ul .collapse-button {
       }
       e.prepend(button)
       })
-    }, 100)
+    })
+    mocha.run()
+    // kind of shit collapsible thing
+    // TODO worth expanding? idk
   </script>
   <script>
     // make mocha categories collapsible
