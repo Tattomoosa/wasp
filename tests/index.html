@@ -1,0 +1,75 @@
+<html>
+  <script src="https://www.chaijs.com/chai.js"></script>
+  <script src="https://unpkg.com/mocha/mocha.js"></script>
+  <script src="../dist/wasp.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/mocha/mocha.css"></script>
+  <body>
+    <a href="../index.html">Back</a>
+    <div id="mocha"></div>
+  </body>
+  <script class="mocha-init">
+    mocha.setup('bdd')
+    mocha.checkLeaks()
+    // mocha.bail()
+  </script>
+  <script>
+    let expect = chai.expect
+    describe('wasp', () => {
+      context('structure', () => {
+        it('has graph', () => {
+          expect(wasp).to.have.property('Graph')
+        })
+      })
+    })
+  </script>
+  <script src="./graph.test.js"></script>
+  <style>
+.display-none {
+  display: none;
+}
+.collapse-button {
+  position: absolute;
+  height: 25px;
+  width: 20px;
+  left: 40px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  border: 1px solid lightgray;
+}
+ul ul .collapse-button {
+  left: 55px;
+    height: 20px;
+}
+ul ul ul .collapse-button {
+  left: 70px;
+  display: none;
+}
+  </style>
+  <script class="mocha-exec">
+    mocha.run()
+    // kind of shit collapsible thing
+    // TODO worth expanding? idk
+    setTimeout(() => {
+      document.querySelectorAll('.suite')
+      // .filter(e => !e.matches('.suite .suite'))
+      .forEach((e) => {
+      let heading = e.querySelector('h1')
+      let list = e.querySelector('ul')
+      let button = document.createElement('input')
+      button.classList.add('collapse-button')
+      button.type = 'button'
+      button.value = 'o'
+      button.onclick = () => {
+        button.value = button.value == '-' ? 'o' : '-'
+        list.classList.toggle('display-none')
+      }
+      e.prepend(button)
+      })
+    }, 100)
+  </script>
+  <script>
+    // make mocha categories collapsible
+  </script>
+</html>

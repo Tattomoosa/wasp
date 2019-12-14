@@ -1,0 +1,41 @@
+<!-- For testing purposes only -->
+<html>
+  <head>
+    <script src="dist/wasp.js"></script>
+  </head>
+  <body>
+    <a href="tests/index.html">Run Tests</a>
+  </body>
+  <script>
+const context = new (window.AudioContext || window.webkitAudioContext)()
+let graph = new wasp.Graph()
+// wrap
+// let dest = graph.addAudioNode(context.destination)
+let osc = graph.createOscillator()
+let lfo = graph.createOscillator()
+let gain = graph.createGain()
+let iir_conf = {
+  feedforward: [0.0, 0.4, 0.2],
+  feedback: [0.2, 0.3, 0.7],
+}
+let iir = graph.createIIRFilter(iir_conf)
+console.log(iir)
+console.log(iir_conf)
+osc.connect(gain)
+gain.gain.value = 0.1
+// console.log(osc.frequency.value, osc.node.frequency)
+osc.frequency.value = 60
+lfo.frequency.value = 0.5
+// lfo.frequency.value = 4
+lfo.connect(osc.frequency)
+let lfo_gain = graph.createGain()
+lfo_gain.gain.value = 20
+lfo.connect(lfo_gain)
+lfo_gain.connect(osc.frequency)
+lfo.connect(gain.gain)
+gain.connect(graph.destination)
+lfo.node.start()
+osc.node.start()
+console.log(osc, lfo)
+  </script>
+</html>
