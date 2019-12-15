@@ -98,7 +98,7 @@ describe('graph', () => {
   describe('Connecting Nodes', () => {
     let graph
     beforeEach(() => { graph = new wasp.Graph(audioContext) })
-    it('single connection by ID', () => {
+    it('single connection from Node to Node', () => {
       let sender = graph.createOscillator()
       let receiver = graph.createGain()
       sender.connect(receiver)
@@ -107,7 +107,7 @@ describe('graph', () => {
       expect(receiver.connections.receives).to.have.property(sender.id)
       expect(receiver.connections.receives[sender.id]).to.equal(sender)
     })
-    it('single connection by id to parameter', () => {
+    it('single connection from Node to AudioParam', () => {
       let sender = graph.createOscillator()
       let receiver = graph.createGain()
       sender.connect(receiver.gain)
@@ -116,6 +116,32 @@ describe('graph', () => {
       expect(receiver.connections.receives.gain).to.have.property(sender.id)
       expect(receiver.connections.receives.gain[sender.id]).to.equal(sender)
     })
-    it('single connection by id to ')
-  })
+    // TODO not sure exactly how to represent this...
+    // connections probably need to be more than object after all.
+    it('single connection from Node to Node with inputIndex')
+    it('single connection from Node to Node with inputIndex, outputIndex')
+    it('single connection from Node to AudioParam with inputIndex')
+    it('single connection from Node to AudioParam with inputIndex, outputIndex')
+    it('multiple connections...')
+  });
+  describe('Disconnecting Nodes', () => {
+    let graph
+    beforeEach(() => graph = new wasp.Graph(audioContext))
+    it('disconnect single node-to-node connection', () => {
+      let sender = graph.createOscillator()
+      let receiver = graph.createGain()
+      sender.connect(receiver)
+      sender.disconnect(receiver)
+      expect(sender.connections.sends).not.to.have.property(receiver.id)
+      expect(receiver.connections.receives).not.to.have.property(sender.id)
+    })
+    it('disconnect single node-to-param connection', () => {
+      let sender = graph.createOscillator()
+      let receiver = graph.createGain()
+      sender.connect(receiver.gain)
+      sender.disconnect(receiver.gain)
+      expect(sender.connections.sends).not.to.have.property(receiver.id)
+      expect(receiver.connections.receives.gain).not.to.have.property(sender.id)
+    })
+  });
 })

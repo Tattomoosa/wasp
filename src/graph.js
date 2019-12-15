@@ -1,30 +1,24 @@
 /*
  * Wasp Graph
  *
- * This module is wrapped directly around the Web Audio API and presents an
- * identical API, while tracking all created nodes/connections.
+ * This module is wrapped directly around the Web Audio API and intends to
+ * present a nearly identical API, while tracking all created nodes/connections.
  *
  * It is the lowest level WASP module, and can be used on its own without
- * any other WASP features.
+ * the rest of wasp.
  */
 
 const DEFAULT_CONTEXT = new window.AudioContext || window.webkitAudioContext
-
-// todo fat arrow generator?
-let idGen = (function* () {
-  let id = 0
-  for (;;) yield id++
-})()
 
 function isAudioParam(param) {
   return param != null && param.constructor.name === 'AudioParam'
 }
 
-class GraphNode {
-  constructor(id, graph) {
+export class GraphNode {
+  constructor(graph) {
     if (graph === undefined)
       console.error('GraphNode', graph, id)
-    this.id = id
+    this.id = graph.createNodeID()
     this.graph = graph
     this.connections = {sends: {}, receives: {}}
     graph.__addGraphNode(this)
@@ -56,7 +50,7 @@ class GraphNode {
   }
 }
 
-class AudioGraphParam {
+export class AudioGraphParam {
   constructor(id, connectionType, audioParam, receives) {
     this.id = id
     this.connectionType = connectionType
@@ -80,11 +74,11 @@ class AudioGraphParam {
   }
 }
 
-class AudioGraphNode extends GraphNode {
-  constructor(id, audioNode, graph) {
+export class AudioGraphNode extends GraphNode {
+  constructor(audioNode, graph) {
     if (graph === undefined)
-      console.error('AudioGraphNode', id, graph)
-    super(id, graph)
+      console.error('AudioGraphNode', graph)
+    super(graph)
     this.connectionType = 'node'
     this.node = audioNode
     this.connector = this.node
@@ -113,13 +107,12 @@ class AudioGraphNode extends GraphNode {
 
   disconnect(destination) {
     this.node.disconnect(destination.connector)
-    GraphNode.prototype.disconnect.call(this)
+    GraphNode.prototype.disconnect.call(this, destination)
   }
 }
 
 // Gets a (nearly) complete list of all Nodes a Web Audio API context can
 // create.
-// TODO should it 
 const audioNodes = Object.getOwnPropertyNames(
   Object.getPrototypeOf(AudioContext.prototype))
   .filter(x => x.includes('create'))
@@ -166,7 +159,7 @@ audioNodes.forEach(
     constructor(graph, config) {
       if (!graph instanceof Graph)
         throw(new TypeError('graph must be an instance of Graph'))
-      super(graph.createNodeID(), new waapiNode(graph.__context, config), graph)
+      super(new waapiNode(graph.__context, config), graph)
     }
   })
 
@@ -174,7 +167,7 @@ Graph.AudioDestinationNode = class extends AudioGraphNode {
   constructor(graph, node) {
     if (!graph instanceof Graph)
       throw(new TypeError('graph must be an instance of Graph'))
-    super(graph.createNodeID(), node, graph)
+    super(node, graph)
   }
 }
 
